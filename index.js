@@ -56,7 +56,7 @@ client.on('ready', async () => {
         } else if (message.body == 'resources') {
             message.reply(`CPU: ${os.cpus().map((core) => { return `${core.speed / 1000} Ghz` })} \n MEM: ${(os.freemem() / 1000000000).toFixed(2)} GB \n UP: ${Math.round(os.uptime() / 3600)} Hours`);
         } else if (message.body.startsWith('tracking ')) {
-            console.log(message.body.split(' ')[1]);
+            console.log(message.body.split('tracking ')[1]);
         } else {
             let msg = await message.getChat();
             msg.sendSeen();
@@ -68,30 +68,37 @@ client.on('ready', async () => {
     app.post('/mail-status/:phone_number/:status', upload.single('file_attachment'), async (req, res) => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
-            const media = MessageMedia.fromFilePath(req.file.path);
+            let media = req.file ? MessageMedia.fromFilePath(req.file.path) : undefined;
             const location = new Location((-7.8137244), 110.376889, { 'address': '59PH+GQ4, Wirogunan, Kec. Mergangsan, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55151', 'name': 'Kost Putra Bu Jarwo' });
-            let message = null;
+            let message = undefined;
             switch (req.params.status) {
                 case 'IN':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda sudah diinput ke aplikasi kami dengan status *${req.params.status}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui\n\nhttp://127.0.0.1:8000/tracking \n\natau bisa melalui nomer wa ini dengan cara \n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    break;
+                case 'ACCELERATION':
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
                     break;
                 default:
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda sudah berubah status menjadi *${req.params.status}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui\n\nhttp://127.0.0.1:8000/tracking \n\natau bisa melalui nomer wa ini dengan cara \n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
                     break;
             }
-            client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
+            if (media == undefined) {
+                client.sendMessage(`${req.params.phone_number}@c.us`, message);
+            } else {
+                client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
+            }
             // client.sendMessage(`${req.params.phone_number}@c.us`, location, { caption: message });
-            res.status(200).send({ 'status': 'Success', 'Message': `Success send notification for ${req.params.phone_number}` });
+            res.status(200).send({ 'status': 'Success', 'message': `Success send notification for ${req.params.phone_number}` });
         } else {
-            res.status(422).send({ 'status': 'Failed', 'Message': `Failed send notification for ${req.params.phone_number} because number is not registered yet` });
+            res.status(422).send({ 'status': 'Failed', 'message': `Failed send notification for ${req.params.phone_number} because number is not registered yet` });
         }
     });
     app.get('/phone-check/:phone_number', async (req, res) => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
-            res.status(200).send({ 'status': 'Success', 'Message': `Success ${req.params.phone_number} is registered` });
+            res.status(200).send({ 'status': 'Success', 'message': `Success ${req.params.phone_number} is registered` });
         } else {
-            res.status(404).send({ 'status': 'Failed', 'Message': `Failed ${req.params.phone_number} is not registered` });
+            res.status(404).send({ 'status': 'Failed', 'message': `Failed ${req.params.phone_number} is not registered` });
         }
     });
 });
