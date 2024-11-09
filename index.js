@@ -5,7 +5,8 @@ const app = express();
 const cors = require('cors')
 const port = 4000;
 const multer = require('multer')
-const os = require('os')
+const os = require('os');
+const backend_url = 'http://127.0.0.1:8000';
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         let folder = 'task-files';
@@ -48,9 +49,6 @@ client.on('qr', async qr => {
 client.on('ready', async () => {
     console.log('Client is ready!');
     const bodyParser = require('body-parser')
-    app.get('/', async (req, res) => {
-        res.send('Welcome to Whatsapp Services')
-    });
     client.on('message', async function (message) {
         if (message.body == 'test') {
             let msg = await message.getChat();
@@ -71,7 +69,7 @@ client.on('ready', async () => {
             msg.sendSeen();
             // msg.sendStateTyping();
             let mail_number = message.body.split('tracking ')[1];
-            let response = await axios.get(`http://127.0.0.1:8000/tracking?number=${mail_number}`);
+            let response = await axios.get(`${backend_url}/tracking?number=${mail_number}`);
             console.log(response.data.data);
         } else {
             let msg = await message.getChat();
@@ -81,6 +79,9 @@ client.on('ready', async () => {
 
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.get('/', async (req, res) => {
+        res.send('Welcome to Whatsapp Services')
+    });
     app.post('/mail-status/:phone_number/:status', upload.single('file_attachment'), async (req, res) => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
@@ -89,13 +90,13 @@ client.on('ready', async () => {
             let message = undefined;
             switch (req.params.status) {
                 case 'IN':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
                     break;
                 case 'ACCELERATION':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
                     break;
                 default:
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
                     break;
             }
             if (media == undefined) {
