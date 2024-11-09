@@ -26,6 +26,7 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage });
 const { Client, LocalAuth, MessageMedia, Location, Contact } = require('whatsapp-web.js');
+const { default: axios } = require('axios');
 
 const client = new Client({
     puppeteer: {
@@ -52,11 +53,26 @@ client.on('ready', async () => {
     });
     client.on('message', async function (message) {
         if (message.body == 'test') {
-            message.reply('bot is online 🇵🇸');
+            let msg = await message.getChat();
+            msg.sendSeen();
+            msg.sendStateTyping();
+            setTimeout(() => {
+                message.reply('bot is online 🇵🇸');
+            }, 30000);
         } else if (message.body == 'resources') {
-            message.reply(`CPU: ${os.cpus().map((core) => { return `${core.speed / 1000} Ghz` })} \n MEM: ${(os.freemem() / 1000000000).toFixed(2)} GB \n UP: ${Math.round(os.uptime() / 3600)} Hours`);
+            let msg = await message.getChat();
+            msg.sendSeen();
+            msg.sendStateTyping();
+            setTimeout(() => {
+                message.reply(`CPU: ${os.cpus().map((core) => { return `${core.speed / 1000} Ghz` })} \n MEM: ${(os.freemem() / 1000000000).toFixed(2)} GB \n UP: ${Math.round(os.uptime() / 3600)} Hours`);
+            }, 30000);
         } else if (message.body.startsWith('tracking ')) {
-            console.log(message.body.split('tracking ')[1]);
+            let msg = await message.getChat();
+            msg.sendSeen();
+            // msg.sendStateTyping();
+            let mail_number = message.body.split('tracking ')[1];
+            let response = await axios.get(`http://127.0.0.1:8000/tracking?number=${mail_number}`);
+            console.log(response.data.data);
         } else {
             let msg = await message.getChat();
             msg.sendSeen();
@@ -73,13 +89,13 @@ client.on('ready', async () => {
             let message = undefined;
             switch (req.params.status) {
                 case 'IN':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
                     break;
                 case 'ACCELERATION':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
                     break;
                 default:
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin ${req.body.admin}. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\nhttp://127.0.0.1:8000/tracking/`;
                     break;
             }
             if (media == undefined) {
