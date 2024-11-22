@@ -7,6 +7,7 @@ const port = 4000;
 const multer = require('multer')
 const os = require('os');
 const backend_url = 'http://127.0.0.1:8000';
+const limiter = require('express-rate-limit');
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         let folder = 'task-files';
@@ -38,7 +39,10 @@ const client = new Client({
         clientId: "Doglex",
     }),
 });
-app.use(cors())
+const corsConfig = {
+    origin: backend_url,
+}
+app.use(cors(corsConfig));
 app.listen(port, () => {
     console.log(`Application Started`);
 })
@@ -51,34 +55,53 @@ client.on('ready', async () => {
     const bodyParser = require('body-parser')
     client.on('message', async function (message) {
         if (message.body == 'test') {
-            let msg = await message.getChat();
-            msg.sendSeen();
-            msg.sendStateTyping();
-            setTimeout(() => {
-                message.reply('bot is online 🇵🇸');
-            }, 30000);
+            setTimeout(async () => {
+                let msg = await message.getChat();
+                msg.sendSeen();
+                msg.sendStateTyping();
+                setTimeout(() => {
+                    message.reply('bot is online 🇵🇸');
+                }, 30000);
+            }, (60 * 1) * 1000);
         } else if (message.body == 'resources') {
-            let msg = await message.getChat();
-            msg.sendSeen();
-            msg.sendStateTyping();
-            setTimeout(() => {
-                message.reply(`CPU: ${os.cpus().map((core) => { return `${core.speed / 1000} Ghz` })} \n MEM: ${(os.freemem() / 1000000000).toFixed(2)} GB \n UP: ${Math.round(os.uptime() / 3600)} Hours`);
-            }, 30000);
+            setTimeout(async () => {
+                let msg = await message.getChat();
+                msg.sendSeen();
+                msg.sendStateTyping();
+                setTimeout(() => {
+                    message.reply(`CPU: ${os.cpus().map((core) => { return `${core.speed / 1000} Ghz` })} \n MEM: ${(os.freemem() / 1000000000).toFixed(2)} GB \n UP: ${Math.round(os.uptime() / 3600)} Hours`);
+                }, 30000);
+            }, (60 * 3) * 1000);
         } else if (message.body.startsWith('tracking ')) {
-            let msg = await message.getChat();
-            msg.sendSeen();
-            // msg.sendStateTyping();
-            let mail_number = message.body.split('tracking ')[1];
-            let response = await axios.get(`${backend_url}/tracking?number=${mail_number}`);
-            console.log(response.data.data);
+            setTimeout(async () => {
+                let msg = await message.getChat();
+                msg.sendSeen();
+                // msg.sendStateTyping();
+                let mail_number = message.body.split('tracking ')[1];
+                let response = await axios.get(`${backend_url}/tracking?number=${mail_number}`);
+                console.log(response.data.data);
+            }, (10) * 1000);
         } else {
-            let msg = await message.getChat();
-            msg.sendSeen();
+            setTimeout(async () => {
+                let msg = await message.getChat();
+                msg.sendSeen();
+            }, (60 * 5) * 1000);
         }
     })
 
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({ extended: true }));
+    const rateLimiter = await limiter.rateLimit({
+        windowMs: 1 * 60 * 1000, // 15 minutes
+        limit: 5, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+        standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+        legacyHeaders: false,
+        handler: (request, response) => {
+            // console.log(request.params.phone_number != undefined && request.params.status)
+            response.status(429).send({ message: `Limited Access, please try again in ${response.getHeader('retry-after')} seconds` });
+        },
+    });
+    app.use(rateLimiter);
     app.get('/', async (req, res) => {
         res.send('Welcome to Whatsapp Services')
     });
@@ -90,6 +113,9 @@ client.on('ready', async () => {
             let message = undefined;
             switch (req.params.status) {
                 case 'IN':
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
+                    break;
+                case 'OUT':
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
                     break;
                 case 'ACCELERATION':
@@ -111,6 +137,14 @@ client.on('ready', async () => {
         }
     });
     app.get('/phone-check/:phone_number', async (req, res) => {
+        let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
+        if (contact) {
+            res.status(200).send({ 'status': 'Success', 'message': `Success ${req.params.phone_number} is registered` });
+        } else {
+            res.status(404).send({ 'status': 'Failed', 'message': `Failed ${req.params.phone_number} is not registered` });
+        }
+    });
+    app.post('/otp/:phone_number', async (req, res) => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
             res.status(200).send({ 'status': 'Success', 'message': `Success ${req.params.phone_number} is registered` });
