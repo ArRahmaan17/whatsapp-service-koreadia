@@ -136,6 +136,47 @@ client.on('ready', async () => {
             res.status(422).send({ 'status': 'Failed', 'message': `Failed send notification for ${req.params.phone_number} because number is not registered yet` });
         }
     });
+    app.post('/broadcast-event/:phone_number', upload.single('file_attachment'), async (req, res) => {
+        let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
+        if (contact) {
+            let media = req.file ? MessageMedia.fromFilePath(req.file.path) : undefined;
+            let agendaList = '';
+            let agendas = JSON.parse(req.body.agendas);
+
+            agendas.forEach((agenda, index) => {
+                agendaList += `${index + 1}. Jam : ${agenda.time} Wit
+${agenda.name}
+Tempat : ${agenda.location}
+Pejabat yang datang & Pengangung jawab acara :
+-${agenda.speaker.split(',').join('\n-')}
+`
+            });
+            let message = `Yth. ${req.body.recipient}
+Dengan Hormat Disampaikan Acara ${req.body.name}
+${req.body.date}
+
+${agendaList}
+3. Jam: 08.00 WIB 
+Sosialisasi Pemanfaatan Data Regsosek Melalui Aplikasi SEPAKAT Lingkup Pemerintah Daerah 
+Tempat: Zoom Meeting
+Meeting ID: 934 4493 6700
+Passcode: 963631
+Pejabat: - 
+-Ka. Bapperida
+-Kadis Sosial, P3A 
+-Kadis Kominfo
+-Kadis Kesehatan dan P2KB
+-Kadis Dukcapil dan PMK
+
+TTD
+PJ. SEKDA`;
+            client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
+            // client.sendMessage(`${req.params.phone_number}@c.us`, location, { caption: message });
+            res.status(200).send({ 'status': 'Success', 'message': `Success send notification for ${req.params.phone_number}` });
+        } else {
+            res.status(422).send({ 'status': 'Failed', 'message': `Failed send notification for ${req.params.phone_number} because number is not registered yet` });
+        }
+    });
     app.get('/phone-check/:phone_number', async (req, res) => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
