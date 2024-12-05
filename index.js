@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({ storage: storage });
-const { Client, LocalAuth, MessageMedia, Location, Contact } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Location } = require('whatsapp-web.js');
 const { default: axios } = require('axios');
 
 const client = new Client({
@@ -85,7 +85,33 @@ client.on('ready', async () => {
             setTimeout(async () => {
                 let msg = await message.getChat();
                 msg.sendSeen();
-            }, (60 * 5) * 1000);
+                // try {
+                //     // let lists = new List(
+                //     //     "Test",
+                //     //     "Menu",
+                //     //     [{
+                //     //         title: 'sectionTitle',
+                //     //         rows: [
+                //     //             { id: 'customId', title: 'ListItem2', description: 'desc' },
+                //     //             { title: 'ListItem2' }
+                //     //         ],
+                //     //     }, {
+                //     //         title: 'sectionTitle',
+                //     //         rows: [
+                //     //             { id: 'customId', title: 'ListItem2', description: 'desc' },
+                //     //             { title: 'ListItem2' }
+                //     //         ],
+                //     //     }]
+                //     // );
+                //     // msg.sendStateTyping();
+                //     setTimeout(() => {
+                //         console.log('kirim harus e iki')
+                //         // client.sendMessage(message.from, lists);
+                //     }, 20000);
+                // } catch (error) {
+                //     console.log(error)
+                // }
+            }, (15) * 1000);
         }
     })
 
@@ -116,13 +142,13 @@ client.on('ready', async () => {
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
                     break;
                 case 'OUT':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat anda *${req.body.number}* sudah diinput ke aplikasi kami dengan status *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
                     break;
                 case 'ACCELERATION':
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
                     break;
                 default:
-                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking nomer-surat-anda_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking/`;
+                    message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
                     break;
             }
             if (media == undefined) {
@@ -130,6 +156,7 @@ client.on('ready', async () => {
             } else {
                 client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
             }
+            // client.sendMessage(`${req.params.phone_number}@c.us`, `tracking ${req.body.number}`)
             // client.sendMessage(`${req.params.phone_number}@c.us`, location, { caption: message });
             res.status(200).send({ 'status': 'Success', 'message': `Success send notification for ${req.params.phone_number}` });
         } else {
@@ -144,11 +171,19 @@ client.on('ready', async () => {
             let agendas = JSON.parse(req.body.agendas);
 
             agendas.forEach((agenda, index) => {
+                if (agenda.online) {
+                    agenda.meeting = JSON.parse(agenda.meeting);
+                }
+                console.log(agenda)
                 agendaList += `${index + 1}. Jam : ${agenda.time} Wit
 ${agenda.name}
-Tempat : ${agenda.location}
+Tempat : ${agenda.location ?? 'Zoon Meeting'}
+${(agenda.online) ? `Topic: ${agenda.meeting.topic ?? 'kosong'}
+Meeting ID: ${agenda.meeting.id ?? 'kosong'}
+Passcode: ${agenda.meeting.passcode ?? 'kosong'}` : ``}
 Pejabat yang datang & Pengangung jawab acara :
 -${agenda.speaker.split(',').join('\n-')}
+
 `
             });
             let message = `Yth. ${req.body.recipient}
@@ -156,17 +191,8 @@ Dengan Hormat Disampaikan Acara ${req.body.name}
 ${req.body.date}
 
 ${agendaList}
-3. Jam: 08.00 WIB 
-Sosialisasi Pemanfaatan Data Regsosek Melalui Aplikasi SEPAKAT Lingkup Pemerintah Daerah 
-Tempat: Zoom Meeting
-Meeting ID: 934 4493 6700
-Passcode: 963631
-Pejabat: - 
--Ka. Bapperida
--Kadis Sosial, P3A 
--Kadis Kominfo
--Kadis Kesehatan dan P2KB
--Kadis Dukcapil dan PMK
+Linimasa acara:
+${backend_url}/event/timeline/${req.body.id}
 
 TTD
 PJ. SEKDA`;
