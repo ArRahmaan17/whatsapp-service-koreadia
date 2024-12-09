@@ -6,6 +6,7 @@ const cors = require('cors')
 const port = 4000;
 const multer = require('multer')
 const os = require('os');
+const moment = require('moment');
 const backend_url = 'http://127.0.0.1:8000';
 const limiter = require('express-rate-limit');
 const storage = multer.diskStorage({
@@ -27,7 +28,7 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({ storage: storage });
-const { Client, LocalAuth, MessageMedia, Location } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Location, Reaction } = require('whatsapp-web.js');
 const { default: axios } = require('axios');
 
 const client = new Client({
@@ -73,17 +74,32 @@ client.on('ready', async () => {
                 }, 30000);
             }, (60 * 3) * 1000);
         } else if (message.body.startsWith('tracking ')) {
+            let msg = await message.getChat();
+            msg.sendSeen();
+            await message.react('⏳')
+            let mail_number = message.body.split('tracking ')[1];
+            msg.sendStateTyping();
             setTimeout(async () => {
-                let msg = await message.getChat();
-                msg.sendSeen();
-                // msg.sendStateTyping();
-                let mail_number = message.body.split('tracking ')[1];
-                let response = await axios.get(`${backend_url}/tracking?number=${mail_number}`);
-                console.log(response.data.data);
-            }, (10) * 1000);
+                try {
+                    let response = await axios.get(`${backend_url}/tracking-surat?number=${mail_number}`);
+                    message.reply(response.data.message);
+                    msg.sendStateTyping();
+                    setTimeout(async () => {
+                        let detailHistory = ``;
+                        response.data.data.histories.forEach((history, index) => {
+                            console.log(history)
+                            detailHistory += `${index + 1}.  ${history.current_status} pada ${moment(history.created_at).format('YYYY MM DD')}\n`;
+                        });
+                        let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
+                        message.reply(histories_message);
+                    }, 15 * 1000);
+                } catch (error) {
+                    message.reply(error.response.data.message ?? "Apps under maintenancex");
+                }
+            }, 5 * 1000);
         } else {
+            let msg = await message.getChat();
             setTimeout(async () => {
-                let msg = await message.getChat();
                 msg.sendSeen();
                 // try {
                 //     // let lists = new List(
