@@ -53,6 +53,28 @@ client.on('qr', async qr => {
 
 client.on('ready', async () => {
     console.log('Client is ready!');
+    function translateStatusMail(text) {
+        switch (text) {
+            case 'IN':
+                return 'MASUK';
+            case 'PROCESS':
+                return 'PROSES';
+            case 'FILED':
+                return 'DIAJUKAN';
+            case 'DISPOSITION':
+                return 'DISPOSISI';
+            case 'REPLIED':
+                return 'DIBALAS';
+            case 'ACCELERATION':
+                return 'DIPERCEPAT';
+            case 'OUT':
+                return 'KELUAR';
+            case 'ARCHIVE':
+                return 'DIARSIPKAN';
+            default:
+                break;
+        }
+    }
     const bodyParser = require('body-parser')
     client.on('message', async function (message) {
         if (message.body == 'test') {
@@ -75,26 +97,28 @@ client.on('ready', async () => {
             }, (60 * 3) * 1000);
         } else if (message.body.startsWith('tracking ')) {
             let msg = await message.getChat();
-            msg.sendSeen();
+            await msg.sendSeen();
             await message.react('⏳')
             let mail_number = message.body.split('tracking ')[1];
-            msg.sendStateTyping();
+            await msg.sendStateTyping();
             setTimeout(async () => {
                 try {
                     let response = await axios.get(`${backend_url}/tracking-surat?number=${mail_number}`);
                     message.reply(response.data.message);
-                    msg.sendStateTyping();
+                    msg = await message.getChat()
+                    await msg.sendStateTyping();
                     setTimeout(async () => {
                         let detailHistory = ``;
                         response.data.data.histories.forEach((history, index) => {
-                            console.log(history)
-                            detailHistory += `${index + 1}.  ${history.current_status} pada ${moment(history.created_at).format('YYYY MM DD')}\n`;
+                            detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name}\n`;
                         });
                         let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
                         message.reply(histories_message);
+                        await message.react('✅')
                     }, 15 * 1000);
                 } catch (error) {
-                    message.reply(error.response.data.message ?? "Apps under maintenancex");
+                    message.reply(error.response.data.message ?? "Aplikasi dalam pemeliharaan");
+                    await message.react('✅')
                 }
             }, 5 * 1000);
         } else {
