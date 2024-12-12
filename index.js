@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({ storage: storage });
-const { Client, LocalAuth, MessageMedia, Location, Reaction } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Location } = require('whatsapp-web.js');
 const { default: axios } = require('axios');
 
 const client = new Client({
@@ -111,7 +111,7 @@ client.on('ready', async () => {
                     setTimeout(async () => {
                         let detailHistory = ``;
                         response.data.data.histories.forEach((history, index) => {
-                            detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name}\n`;
+                            detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name} dan divalidasi ${history.validator.name}\n`;
                         });
                         let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
                         message.reply(histories_message);
@@ -176,7 +176,6 @@ client.on('ready', async () => {
         let contact = await client.isRegisteredUser(`${req.params.phone_number}@c.us`);
         if (contact) {
             let media = req.file ? MessageMedia.fromFilePath(req.file.path) : undefined;
-            const location = new Location((-7.8137244), 110.376889, { 'address': '59PH+GQ4, Wirogunan, Kec. Mergangsan, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55151', 'name': 'Kost Putra Bu Jarwo' });
             let message = undefined;
             switch (req.params.status) {
                 case 'IN':
@@ -196,9 +195,9 @@ client.on('ready', async () => {
                     break;
             }
             if (media == undefined) {
-                client.sendMessage(`${req.params.phone_number}@c.us`, message);
+                await client.sendMessage(`${req.params.phone_number}@c.us`, message);
             } else {
-                client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
+                await client.sendMessage(`${req.params.phone_number}@c.us`, media, { caption: message });
             }
             // client.sendMessage(`${req.params.phone_number}@c.us`, `tracking ${req.body.number}`)
             // client.sendMessage(`${req.params.phone_number}@c.us`, location, { caption: message });
