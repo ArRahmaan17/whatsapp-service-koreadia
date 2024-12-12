@@ -71,6 +71,8 @@ client.on('ready', async () => {
                 return 'KELUAR';
             case 'ARCHIVE':
                 return 'DIARSIPKAN';
+            case 'ALERT':
+                return 'PERINGATAN';
             default:
                 break;
         }
@@ -97,16 +99,15 @@ client.on('ready', async () => {
             }, (60 * 3) * 1000);
         } else if (message.body.startsWith('tracking ')) {
             let msg = await message.getChat();
-            await msg.sendSeen();
-            await message.react('⏳')
+            msg.sendSeen();
+            message.react('⏳')
             let mail_number = message.body.split('tracking ')[1];
-            await msg.sendStateTyping();
+            msg.sendStateTyping();
             setTimeout(async () => {
                 try {
                     let response = await axios.get(`${backend_url}/tracking-surat?number=${mail_number}`);
                     message.reply(response.data.message);
-                    msg = await message.getChat()
-                    await msg.sendStateTyping();
+                    msg.sendStateTyping();
                     setTimeout(async () => {
                         let detailHistory = ``;
                         response.data.data.histories.forEach((history, index) => {
@@ -114,7 +115,7 @@ client.on('ready', async () => {
                         });
                         let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
                         message.reply(histories_message);
-                        await message.react('✅')
+                        message.react('✅')
                     }, 15 * 1000);
                 } catch (error) {
                     message.reply(error.response.data.message ?? "Aplikasi dalam pemeliharaan");
@@ -186,6 +187,9 @@ client.on('ready', async () => {
                     break;
                 case 'ACCELERATION':
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
+                    break;
+                case 'ALERT':
+                    message = `Bapak/Ibu ${req.body.admin} yang kami hormati ingin menginformasikan bahwa ada surat yang diajukan kepada anda, mohon untuk dilakukan pengecekan terkait surat tersebut di aplikasi\n${backend_url}`;
                     break;
                 default:
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
