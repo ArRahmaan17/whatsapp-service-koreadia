@@ -100,7 +100,7 @@ client.on('ready', async () => {
         } else if (message.body.startsWith('tracking ')) {
             let msg = await message.getChat();
             msg.sendSeen();
-            message.react('⏳')
+            // message.react('⏳')
             let mail_number = message.body.split('tracking ')[1];
             msg.sendStateTyping();
             setTimeout(async () => {
@@ -111,11 +111,15 @@ client.on('ready', async () => {
                     setTimeout(async () => {
                         let detailHistory = ``;
                         response.data.data.histories.forEach((history, index) => {
-                            detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name} dan divalidasi ${history.validator.name}\n`;
+                            if (history.current_status == 'FILED') {
+                                detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} kepada *${history.validator.name}* pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name}\n`;
+                            } else {
+                                detailHistory += `${index + 1}.  ${translateStatusMail(history.current_status)} pada ${moment(history.created_at).locale('Id').format('dddd, MMMM Do YYYY, h:mm:ss a')} penanggung jawab admin ${history.user.name}\n`;
+                            }
                         });
                         let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
                         message.reply(histories_message);
-                        message.react('✅')
+                        // message.react('✅')
                     }, 15 * 1000);
                 } catch (error) {
                     message.reply(error.response.data.message ?? "Aplikasi dalam pemeliharaan");
