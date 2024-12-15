@@ -100,7 +100,7 @@ client.on('ready', async () => {
         } else if (message.body.startsWith('tracking ')) {
             let msg = await message.getChat();
             msg.sendSeen();
-            message.react('⏳')
+            // message.react('⏳')
             let mail_number = message.body.split('tracking ')[1];
             msg.sendStateTyping();
             setTimeout(async () => {
@@ -119,7 +119,7 @@ client.on('ready', async () => {
                         });
                         let histories_message = `Bapak/Ibu *${response.data.data.sender}* dengan ini kami informasikan tentang history surat anda *${response.data.data.number}*\nHistory: \n${detailHistory}`;
                         message.reply(histories_message);
-                        message.react('✅')
+                        // message.react('✅')
                     }, 15 * 1000);
                 } catch (error) {
                     message.reply(error.response.data.message ?? "Aplikasi dalam pemeliharaan");
@@ -192,7 +192,7 @@ client.on('ready', async () => {
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* telah di percepat oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
                     break;
                 case 'ALERT':
-                    message = `Bapak/Ibu ${req.body.admin} yang kami hormati ingin menginformasikan bahwa ada surat yang diajukan kepada anda, mohon untuk dilakukan pengecekan terkait surat tersebut di aplikasi\n${backend_url}`;
+                    message = `Bapak/Ibu ${req.body.user} yang kami hormati ingin menginformasikan bahwa ada surat tentang ${req.body.regarding} dikirim oleh ${req.body.sender} yang diajukan oleh ${req.body.validator} kepada anda, mohon untuk dilakukan pengecekan terkait surat tersebut di aplikasi\n${backend_url}`;
                     break;
                 default:
                     message = `Bapak/Ibu *${req.body.sender}* dengan ini kami informasikan bahwa surat Anda *${req.body.number}* sudah berubah status menjadi *${req.params.status}* oleh admin *${req.body.admin}*. Harap bersabar, dan kami akan segera memberi kabar perkembangan tentang surat anda. Terima kasih atas perhatian Anda.\n\nuntuk melakukan pemantauan surat bisa melalui nomer wa ini dengan cara\n\n*_tracking ${req.body.number}_*\n\nkirimkan ke nomer ini atau bisa melalui link di bawah ini\n\n${backend_url}/tracking`;
